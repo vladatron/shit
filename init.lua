@@ -1,3 +1,6 @@
+buf = {}
+
+
 dofile("wifi-sta.lua")
 --dofile("wifi-ap.lua")
 

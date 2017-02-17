@@ -3,8 +3,8 @@ wifi.setmode(wifi.STATION)
    
 --wifi.sta.config("Regiojet - zluty","")
 --wifi.sta.config("Base48.cz-2G","robotour09")
---wifi.sta.config("Smetanka1","11pp6688")
-wifi.sta.config("NaughtyHouse","333kalhotnaXichte")
+wifi.sta.config("Smetanka1","11pp6688")
+--wifi.sta.config("NaughtyHouse","333kalhotnaXichte")
 wifi.sta.connect()
 local cnt = 0
 tmr.alarm(3, 1000, 1, function() 

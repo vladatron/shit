@@ -1,5 +1,10 @@
+buf = {}
+lastBufIndex = 5
+bufIndex = 0;
+
 function makeHeader()
-    buf = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<!DOCTYPE HTML>";
+    buf[0] = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<!DOCTYPE HTML>";
+    for i=1,lastBufIndex-1,1 do buf[i] = " "; end
 end
 
 srv=net.createServer(net.TCP)
@@ -10,6 +15,7 @@ srv:listen(80,function(conn)
             _, _, method, path = string.find(request, "([A-Z]+) (.+) HTTP");
         end
         makeHeader()
+        bufIndex = lastBufIndex; -- stop sending previous page
         requestVars = vars
         --local _GET = {}
         local k=nil
@@ -26,9 +32,16 @@ srv:listen(80,function(conn)
            end
         else dofile("wpindex.lua")
         end
-        
-        client:send(buf);
-        client:close();
-        collectgarbage();
+        bufIndex = 1;
+        client:send(buf[0]);
+    end)
+    conn:on("sent", function(client)
+        if (bufIndex < lastBufIndex) then 
+            client:send(buf[bufIndex]);
+            bufIndex = bufIndex + 1;
+        else 
+            client:close();
+            collectgarbage();
+        end
     end)
 end)
