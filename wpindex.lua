@@ -1,16 +1,4 @@
-function my_sync_time()
-sntp.sync("0.cz.pool.ntp.org",
- function(sec,usec,server)
-   print('setting time to:', sec, usec, "from: " .. server)
-   rtctime.set(sec, usec)
-   sec, usec = rtctime.get()
-   print('time set to: ', sec, usec)
- end,
- function()
-   print('failed!')
- end
-)
-end
+
 
 if (requestVars ~= nil)then
     for k, v in string.gmatch(requestVars, "(%w+)=(%w+)&*") do
