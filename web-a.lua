@@ -1,10 +1,6 @@
-buf = {}
-lastBufIndex = 5
-bufIndex = 0;
 
 function makeHeader()
-    buf[0] = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<!DOCTYPE HTML>";
-    for i=1,lastBufIndex-1,1 do buf[i] = " "; end
+    buf = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<!DOCTYPE HTML>";
 end
 
 srv=net.createServer(net.TCP)
@@ -18,27 +14,34 @@ srv:listen(80,function(conn)
         bufIndex = lastBufIndex; -- stop sending previous page
         requestVars = vars
         --local _GET = {}
-        local k=nil
-        local l=nil
-        k, l = string.find(path, "%w+", 1)
-        if ((k ~= nil)and(l ~= nil)and(l >= k)and(l >= 1)) then
-           local webPage = string.sub(path, k, l);
-           local webFile = "wp"..webPage..".lua"
-           if (file.open(webFile)) then 
-               file.close()
-               dofile(webFile)
-           else
-               dofile("wperr.lua")
-           end
-        else dofile("wpindex.lua")
+        if (false == b_timeSynchronized) then    -- check if time is synchronized
+            add2buf("<html><body><b>Time synchronizing in progress. Try again in few seconds... </b></br><a href=\"index\">back</a>");    -- error page
+        else
+            local k=nil
+            local l=nil
+            k, l = string.find(path, "%w+", 1)
+            if ((k ~= nil)and(l ~= nil)and(l >= k)and(l >= 1)) then
+                local webPage = string.sub(path, k, l);
+                local webFile = "wp"..webPage..".lua"
+                if (file.open(webFile)) then 
+                    file.close()
+                    dofile(webFile)
+                else
+                    add2buf("<html><body><b>Page not found</b></br><a href=\"index\">back</a>");    -- error page
+                end
+            else 
+                dofile("wpindex.lua")
+            end           
+            add2buf("</body></html>"); 
+            client:send(string.sub(buf,0,maxSendPacket));
+            bufReadIndex = maxSendPacket+1;
         end
-        bufIndex = 1;
-        client:send(buf[0]);
     end)
     conn:on("sent", function(client)
-        if (bufIndex < lastBufIndex) then 
-            client:send(buf[bufIndex]);
-            bufIndex = bufIndex + 1;
+        local tmpBuf = string.sub(buf,bufReadIndex,bufReadIndex+maxSendPacket)
+        if (string.len(tmpBuf) ~= 0) then 
+            client:send(tmpBuf);
+            bufReadIndex = bufReadIndex + maxSendPacket+1;
         else 
             client:close();
             collectgarbage();
